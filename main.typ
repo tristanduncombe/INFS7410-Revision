@@ -27,11 +27,80 @@ A search engine retrieves documents according to their relevance to the query. T
 - head, nachor text, and bold text are all likely to be more important
 - links within the document can be used for link analysis.
 
+= Indexing
 
+== Zipf's Law
+Distribution of word frequencies is very skewed a few words occur very often, many words hardly ever occur e.g., two most common words (“the”, “of”) make up about 10% of all word occurrences in text documents
+
+- Observation that rank (r) of a word times its frequency (f) is approximately a constant (k)
+- Assuming words are ranked in order of decreasing frequency
+  - i.e., r.f \~ k or r.Pr \~ c, where;
+    - Pr : probability of word occurrence 
+    - c \~ 0.1 coefficient for English
+=== Consequences of Zipf’s Law
+Words need to be ignored as words that appear extremely infrequently are likely typos etc.,words that appear too often do not help discriminate between documents.
+
+== Tokenizing
+Forming words from sequence of characters
+
+=== Early IR systems:
+  - any sequence of alphanumeric characters of length 3 or more
+  - terminated by a space or other special character
+  - upper-case changed to lower-case
+
+Issues:
+- Removal of special characters like hyphens lost information or made URLs, code and tags not function
+- Capitals can have different meanings, Apple vs apple
+- Numbers that are less than 100 are removed.
+- Periods can occur in numbers, abbreviations etc. and would stop tokenizing early
+
+=== Modern Tokenization Process
+First step is to use parser to identify appropriate parts of document to tokenize (you may not want to tokenise all fields)
+- Defer complex decisions to other components
+- word is any sequence of alphanumeric characters, terminated by a space or special character, with everything converted to lower-case
+- everything indexed
+
+=== Stopping
+Function words, prepositions have little meaning on their own and often have high occurrence frequencies can be removed to reduce index space, improve response time and improve effectiveness. One drawback is that they can be important in combinations, e.g. 'to be or not to be'
+
+=== Stemming
+Many words have many morphological variations i.e. plurals and tenses. These words while different have similar meanings. Stemmers attempt to reduce morphological variations of words to a common stem, usually involving removing suffixes. Can be crucial for some languages while small improvements for others, 5-10% in English, 50% in Arabic.
+
+- Porter Stemmer
+  - Algorithmic stemmer used in IR experiments since the 70s. Consists of a series of rules designed to the longest possible suffix at each step. Makes a number of errors and difficult to modify.
+- Krovetz Stemmer
+  - Hybrid algorithmic-dictionary. Word checking dictionary, if present left alone of replace with 'exception', if not present, word is checked for suffixes that could be removed, check again. Lower false positive rate, somewhat higher false negative.
+
+== Inverted Index
+
+#stack(dir: ltr, spacing: 10%)[
+  - Has the word and the the docId stored
+  - Inverted list (usually ordered in increasing docid)  
+  - Can also contain frequency / count or position data.
+]
+
+#stack(dir: ltr, spacing: 10%)[
+  *Normal*
+    - and : {1}
+    - aquarium : {3}
+    - are : {3, 4}
+][
+  *Frequency*
+    - and : {1:1}
+    - aquarium : {3:1}
+    - are : {3:1, 4:2}
+][
+  *Position*
+    - and : {1,15}
+    - aquarium : {3,4}
+    - are : {3:,3} 4,14}
+]
+
+With position data you can check phrases, for example, we know 'are aquarium' happens in doc 3 from 3:4.
 
 = Term Based Lexical Models
 
-== BM25
+== BM25 (Best Match 25)
 = BM25 Ranking Function
 
 BM25 is a popular and effective ranking algorithm based on the binary independence model.
