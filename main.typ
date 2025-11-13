@@ -1,3 +1,4 @@
+
 #set text(font: "Noto Sans")
 #set text(lang: "en", region: "au")
 #[
@@ -5,6 +6,9 @@
   INFS7410 Revision
 ]
 
+#show image: it => {
+  align(center, it)
+}
 Foreword:
 
 These are notes written by a web-developer who has no idea on web-indexing, read at your own risk. If you have thoughts comment on this document via Typst.app or via the GitHub discussion. Input is welcome! 
@@ -31,7 +35,7 @@ A search engine retrieves documents according to their relevance to the query. T
 == Table of Relevance
 #figure(image("images/table of relevance.png"), caption: "Table of Relevance Model showing costs of each model (Week 8 Lecture)")<table-relevance>
  
-*- Term-based lexical models (Week 3)*
+* Term-based lexical models (Week 3)*
   - #link(<bm25>)[BM25]
   - Boolean Model
   - TF
@@ -39,15 +43,15 @@ A search engine retrieves documents according to their relevance to the query. T
   - VSM
   - Binary Independence Model
 
-*- Learned-sparse retrievers (Week 6)*
+* Learned-sparse retrievers (Week 6)*
   - #link(<tilde>)[TILDE]
   - #link(<tildev2>)[TILDEv2]
 
-*- Simple Traditional LTR Approaches (like point wise) (Week 7)*
+* Simple Traditional LTR Approaches (like point wise) (Week 7)*
 
-*- Traditional LTR (complex ones like pairwise/likewise) (Week 7?)*
+* Traditional LTR (complex ones like pairwise/likewise) (Week 7?)*
 
-*- Single-vector embedding-based retrievers (Week 5)*
+* Single-vector embedding-based retrievers (Week 5)*
   - #link(<dpr>)[DPR]
   - #link(<ance>)[ANCE]
   - #link(<repbert>)[RepBERT]
@@ -56,12 +60,12 @@ A search engine retrieves documents according to their relevance to the query. T
   - #link(<llm2vec>)[LLM2Vec]
   - #link(<repllama>)[RepLlama]
 
-*- Multi-vector embedding-based retrievers (Week 5)*
+* Multi-vector embedding-based retrievers (Week 5)*
   - #link(<colbert>)[ColBERT]
   
-*- Simple Neural Reranker (Monobert, Pointwise LLM-based etc) (Week 8)*
+* Simple Neural Reranker (Monobert, Pointwise LLM-based etc) (Week 8)*
 
-*- More Sofiscatred Neural Reranker (DuoBERT, Pairwise etc) (Week 8)*
+* More Sofiscatred Neural Reranker (DuoBERT, Pairwise etc) (Week 8)*
 
 = Indexing
 
@@ -203,7 +207,7 @@ Purpose:
 - Masked attention (can't see future words)
 Example:
 - Input: “UQ is”+ encoded vectors (optional)
-- Output: "the" → "University" → “of" → ...
+- Output: "the" $arrow$ "University" $arrow$ “of" $arrow$ ...
 Application:
 - Translation, Text Generation, all morden LLMs usage.
 
@@ -321,8 +325,8 @@ This is known as the *term saturation component*.
 
 The contribution of the occurrence of a term to a document score cannot exceed a saturation point.  
 The parameter $k_1$ controls the saturation, where $k_1 > 0$:
-- High $k_1$ → $f_i$ contributes significantly to the score.
-- Low $k_1$ → additional contribution of further term occurrences tails off quickly.
+- High $k_1$ $arrow$ $f_i$ contributes significantly to the score.
+- Low $k_1$ $arrow$ additional contribution of further term occurrences tails off quickly.
 
 Typically, $k_1$ is set to 1.2.
 
@@ -342,14 +346,14 @@ This is known as the document length normalisation component.
 
 An author may write a shorter or longer document than the average.  
 The reason could be:
-- Verbosity → prefer shorter documents.
-- Scope → prefer longer documents.
+- Verbosity $arrow$ prefer shorter documents.
+- Scope $arrow$ prefer longer documents.
 
 This component provides a soft normalisation of document length.
 
 The parameter $b$ controls the level of normalisation ($0 <= b <= 1$):
-- $b = 1$ → full normalisation  
-- $b = 0$ → no normalisation  
+- $b = 1$ $arrow$ full normalisation  
+- $b = 0$ $arrow$ no normalisation  
 
 Typically, $b = 0.75$.  
 $B$ is used to normalise the term frequency $f_i$.
@@ -763,7 +767,7 @@ Use a machine learning model to combine evidence
 LTR or LeToR (Learning to rank) are hypermodels built upon prior retrieval models.
 
 Similar to other machine learning tasks,
-- Given training data, X → Y, learn a model $Y = f(X,w)$;
+- Given training data, X $arrow$ Y, learn a model $Y = f(X,w)$;
 - For new data $y$, apply the model to get $y = f(x, w)$;
 	- y: desired value, x: feature vector, w: weight vector
  
@@ -996,7 +1000,93 @@ Methods to deal with these interactions should be robust to noise and bias: unbi
     + Decide what results to display to user
     + Learn from user interactions with chosen results
   - Different ways to de-bias the signal (some don't)
-  
+
+=== Evaluation with full information
+We know the true relevance labels y for all candidate documents.
+
+$
+Delta (f_0, D, y) = sum_(d_i in D) lambda("rank"(d_i | f_0, D)) dot y(d_i) \
+"where rank is the rank position of document " d_i "ranked by " f_0 "and " lambda "is a rank weighting function:" \
+
+"Average Relevant Position (ARP)": lambda(r) = r  \
+"Discount Cumulative Gain (DCG)": lambda(r) = 1/(log 2 (1+r)) \
+"Percision at k (Prec@k):" Delta(R) = (1[r<=k])/k
+$
+
+#image("images/LTR evaluation example.png")
+
+=== Evaluation with partial information
+We often do not know the true relevant labels $y(d_i)$, only have implicit feedbacks from users, e.g., clicks
+
+A missing click does not indicate non-relevance, and a click is a biased and noisy indicator of relevance.
+
+We can compute the chance that a document is clicked on by
+
+$
+P(c_i = 1 ∧ o_i = 1 | y(d_i)) = P(c_i = 1 | o_i = 1,y(d_i)) ⋅ P(o_i = 1 | i)
+$
+
+==== Naive estimator
+A naive way to estimate a ranking mode l is to assume clicks are relevance signals: 
+
+$
+Delta_"NAIVE"(f_0, D, c) = sum_(d_i in D) lambda("rank"(d_i) | f_0, D)) dot c_i
+$
+
+Even with no click noise, this estimator is biased by the examination probabilities
+
+== Unbiased Estimator
+Counterfactual evaluation accounts for position bias using Inverse propensity Scoring (IPS);
+
+$
+Delta_"IPS"(f_0, D, c) = sum_(d_i in D) (lambda("rank"(d_i | f_0, D)))/(P(o_i = 1)) dot c_i
+$
+
+This ends up being a decent estimation of the full information evaluation
+
+== Online Evaluation
+=== Balanced Interleaving
++ randomly choose one of the rankers to begin
++ then the rankers take turns:
+  + chosen ranker places its next document unless it has already been placed
+  + turn goes to the other ranker
+  + repeat step i) until k documents are placed
++ display resulting interleaving to user, observe clicks
+
+#image("images/balanced interleaving.png")
+
+=== Inferring preferences from clicks
++ Determine the clicked document with the lowest displayed rank: dmax
++ Take the highest rank for dmax over the two rankers: imin
++ Count the clicked documents for each ranker at imin or above.
++ The ranker with the most clicks is preferred.
+
+=== Dueling Bandit Gradient Descent
+If online evaluation can tell us if a ranker is better than another, then we can use it to find an improvement of our system.
+
+By sampling model variants and comparing them with interleaving, the gradient of a model w.r.t. user satisfaction can be estimated.
+
++ Start with the current ranker with feature vector $theta$.
++ for i to inf (i.e. lifetime of the search engine) repeat:
+  + Sample a random unit vector $u$ from the unit sphere ($|u| = 1$)
+  + Compute the candidate ranker $theta prime = theta + u$
+  + Get the result list of $theta$ and $theta prime$;
+  + Compare $theta$ and $theta prime$ using interleaving .
+  + $theta prime$ wins the comparison, update $theta = theta + alpha * u$ (where $alpha$ is the learning rate).
+
+#image("images/dbgd.png")
+
+=== Advantages
+- May be more efficient: because they have control over what data is gathered, by producing the ranking
+- Learn the true preferences of users
+- Responsive to changes in intents: they "immediately" respond to users
+
+=== Potential problems
+- Unreliable methods cn worsen the user experience
+- At the start, the user experience may not be god and user may be exposed to bad rankers until close to convergence
+- Exploration of the ranking space may mean exposing users to bad rankings, thus worsening user experience
+- Click noise, bias, adversarial behaviours, serendipity may all negatively affect the learning process and worsen the user experience
+
 == Neural and LLM Rerankers
 
 We can use either encoder or decoder based transformers as rerankers. To do so:
@@ -1033,3 +1123,781 @@ $L = sum_(j in J_"pos") log(s_j) - sum_(j in J_"neg") log(1-s_j)$
 Common practice:
 - For positive judgement (relevant), use human label
 - For negative judgement (negative), sample from BM25
+
+=== monoBERT
+
+#image("images/monoBERT for ranking.png")
+
+monoBERT is very effective, below are results on the TREC 2019 Deep Learning Track (passage retrieval).
+
+#table(columns: (1fr, 1fr, 1fr, 1fr))[][nDCG\@10][MAP][Recall\@1k][BM25][0.506][0.377][0.739][+monoBERT][*0.738*][*0.506*][0.739][BM25 + RM3][0.518][0.427][0.788][+monoBERT][*0.724*][*0.529*][0.788]
+
+==== monoBERT limitations
+#image("bert.png")
+Need separate embedding for every possible position, so we restrict the indices 0-511.
+- Hence, we cannot input the entire document.
+
+  To Improve Training:
+  - Chunk documents
+  - Transfer labels (although this is an approximation)
+  To Improve Inference:
+  - Aggregate evidence either over passage scores or over sentence scores.
+  
+- Computationally expensive layers.
+  - e.g. 110+ million learned weights
+  To Improve: 
+  - We could use a multistage ranking pipeline with limited re-ranking
+  - We could simplify the BERT interface & dense retrievers
+
+
+=== monoBERT over passages scores
+BERT-MaxP, FirstP, SumP either take the maximum, first or sum. 
+
+#image("bert-max-p.png")
+
+These methods deliver better results with MaxP showing the best results
+// MAYBE remove????
+#image("monobert-passages-scores-results.png")
+
+=== monoBERT over sentence scores: Birch
+
+$s_f =^Delta alpha dot s_d + (1 - alpha) dot sum^n_(i=1) w_i dot s_i$
+
+Where: \
+$alpha dot s_d$ is the first retrieval score \
+$w_i dot s_i$ is the sentence scores
+
+Trained on sentence level judgements like tweets and interpolation weights are tuned on target dataset.
+// Maybe add scores here??????
+
+=== Representation Aggregate
+
+#image("representation aggregation.png")
+
+You can do this for either term embeddings or passage representations.
+
+=== Over Passage Rep: PARADE
+
+Aggregation approaches (in order of increasing complexity):
+
+- Average feature value
+
+- Max feature value
+
+- Attention weighted average
+
+- Two Transformer layers
+
+#image("parade.png")
+
+
+=== Multi-stage re-rankers
+
+A multi-stage re-ranker will take the top k documents and then put it through another re-ranker. Usually this is from most efficient to least efficient with the the least efficient being the most effective. There is trade-off between effectiveness (quality of the ranked lists) and efficiency (retrieval latency). 
+
+=== duoBERT
+#image("duoBERT.png")
+
+DuoBERT takes the token embeddings, segment embeddings, and position embeddings.
+
+To train duoBERT
+
+$L_"duo" = - sum_(i in J_"pos", j in J_"neg") log(p_i, j) - sum_(i in in J_"neg",j in J_"pos") log(1-p_i,j)$
+
+Is doc di more relevant than doc dj to query q?
+
+#image("duobert training.png")
+
+=== Inference with duoBERT
+
+#image("duobert inference.png")
+
+=== monoBERT vs duoBERT
+
+#image("monobert v duobert.png")
+
+
+=== Takeaways of Multi-stage Rankers
+
+Advantage:
+- More tuning knobs $arrow$ more flexibility in effectiveness/efficiency tradeoff space
+
+
+Disadvantage:
+- More complexity
+
+Reranking with transformers is new and not well studied
+
+=== LLM as a Rankers
+
+#image("llm-as-rankers.png")
+
+All four main families are characterised by how documents are passed in the prompt an dhow relevance of document and query is determined.
+
+All are "zero-shot": i.e. once you obtained the pre-trained, instructions tuned LLM, no need to do contrastive training
+
+#image("llm-as-rankers-methods.png")
+
+Where: \
+a is pointwise, \
+b is listwise, \
+c is pairwise, \
+d is setwise\
+
+Setwise offers two advanages:
+- Compared to listwise: it can rely on logits rather than generation so it's faster
+- Compared to pairwise: it requires less comparisons (i.e. inferences with LLM)
+
+#image("pairwise v setwise.png")
+
+Prompts proposed for different LLM rankers vary largely. Not just in terms of instructions but adding additional wording such as a roleplaying and ordering of components (passage first, then query - or vice versa)
+
+The effectiveness varies across these wordings, with LLMs finding ranking more complex than classifying. 
+
+= Generative IR
+
+As was previously discussed there are three transformer architectures:
+
+#grid(columns: (0.5fr, 1fr))[][][
+  #image("encoder.png", width: 75%)
+][
+  - Gets bidirectional context: can condition on future tokens!
+  - Fine-tuning done via Masked Language Model
+  - BERT uses this approach
+  - Generating sequences: don't naturally lead to effective auto regressive (1-word-at-a-time) generation methods. \ \
+][
+#image("decoder.png", width: 75%)
+][- Can generate text, but can't condition on future words
+- GPT-stye][
+  
+#image("encoder-decoder.png")
+][
+  - Good parts of decoders and encoders? Not really.
+  - Hard to scale (computationally complex)
+  - Not data efficient
+  - T0, T5
+]
+
+== Autoregression Decoders
+
+In an autoregressive text generation model, at each time step $t$, the model takes a sequence of ${y}_(<t)$ as input, and outputs a new token $hat(y)_t$
+#align(center)[
+  #image("autoregressive-decoder.png", width: 50%)
+]
+
+== In-context Learning
+pre-GPT-3 models are used in two ways:
++ Sample from the distributions they define (maybe providing a prompt)
++ Fine-tune them on a task, and take their predictions
+
+Very large language models seem to perform some kind of learning without gradient steps (pre-training) simply from examples you provide within their contexts (input, a.k.a prompt).
+
+Input (prefix within a single transformer decoder context): \
+"thanks" $arrow$ "merci" \
+"hello" $arrow$ "bonjour" \
+"mint" $arrow$ "menthe" \
+"otter" $arrow$ $...$ \
+Output (conditional generations):
+"loutre..."
+
+
+#image("in-context-learning.png")
+
+== Zero, one, few-shot learning
+
+=== Zero Shot
+The model predicts the answer given only a natural language description of the task. No gradient updates are performed.
+```
+Translate English to French
+cheese =>
+```
+
+=== One Shot
+In addition to the task description, the model sees a single example of the task. No gradient updates are performed.
+```
+Translate English to French
+sea otter => loutre de mer
+cheese =>
+```
+
+=== Few Shot
+In addition to the task description, the model sees a few example of the task. No gradient updates are performed.
+```
+Translate English to French
+sea otter => loutre de mer
+peppermint => menthe poivree
+pus girafe => girafa peluche
+cheese =>
+```
+
+=== Fine Tuning
+The model is trained via repeated gradient updates using a large corpus of example tasks.
+
+```
+sea otter => loutre de mer
+```
+_Gradient Update_
+
+```
+peppermint => menthe poivree
+```
+
+_Gradient Update_
+
+Many other examples 
+
+pus girafe => girafa peluche
+
+_Gradient Update_
+```
+cheese =>
+```
+
+=== Chain of Thought Prompting
+
+Chain of thought prompting explains your reasoning for an answer in a one-shot or a few-shot where you explain a previous answer to provide reasoning to the LLM.
+
+== Retrieval Augmented Generation
+
+LLMs encapsulate a vast amount of factual information within their pre-trained weights
+
+This knowledge is inherently limited, relying heavily on the characteristics of the training data
+
+Solution: use external datasets to incorporate new information or refine the capabilities of LLMs.
+
+Two directions to do this:
++ unsupervised fine-tuning
++ retrieval-augmented-generation (RAG)
+
+Unsupervised fine-tuning offers some improvement, but RAG consistently outperforms it, both for existing knowledge encountered during training and entirely new knowledge.
+- LLMs struggle to learn new factual information through unsupervised fine-tuning.
+
+
+#align(center)[
+ #image("rag-pipline.png", width: 50%) 
+]
+
+The pre-retrieval and post-retrieval are not necessary.
+
+The modularity of RAG allows for:
+- Sequential processing and integrated end-to-end training across components
+- New/Additional modules
+- New Patterns (e.g. Rewrite-Retrieve-Read, Generate-Read, Recite-Read, Retrieve-Read-Retrieve-Read, Hypothetical Document Embeddings (HyDE), Demonstrate-Search-Predict (DSP))
+- Adaptive RAG: flexible orchestration of RAG modules and flows, e.g. Self-RAG
+
+== BlendFilter
+BlendFilter enhances input queries through different augmentation strategies.
++ Use initial query to retrieve external knowledge.
++ Pass this to LLM prompt with few-shot examples and Chain of Thought
++ Generate answer
++ Concatenate answer and original query
+
+Then it prompts for internal knowledge
+#image("internal-knowledge-augmentation.png", width: 30%)
+
+Then it eliminates the irrelevant knowledge using prompted LLM. It would provide the LLM the knowledge retrieved, the topic at hand and would ask it to categorise into a certain level of knowledge ("please check the relevance between the question and knowledges 0-4 on by one based on the context"). 
+
+The LLM generates an answer based on the filtered knowledge and original query.
+
+
+#image("blendfilter.png", width: 50%)
+
+== Rewrite-Retrieve-Read Method
+
+Queries are often ambiguous and underspecified
+
+*Rewrite*: black-box LLM is prompted to re-write query
+
+*Retrieve*: search based on the re-written query
+
+*Read*: provide instruction, query, documents, generate answer
+
+#image("images/rewrite retrieve read.png", width: 10%)
+
+Few-shot (1-3) prompt in format [instruction, demonstrations, input]
+
+Output can be none, one or more queries
+
+#image("images/read-rewrite-read open vs multiple.png", width: 40%)
+
+#image("images/rewrite retrieve read method.png", width: 50%)
+
+
+Trainable Rewriter
+
+Warm-up: training on pseudo-data
+- Collect rewritten queries x, keep only those that generate correct end-to-end answers: use to form warm-up dataset.
+- Fine-tune rewriter on warm-up dataset
+
+Then continually trained by Reinforcement Learning with PPO
+
+Reward obtained from end-to-end answers compared to gold + KL regularisation to prevent model doom deviating too far.
+
+== Prompt Compression
+
+Reduce the prompt (aka context) to consume less tokens than in its original form. 
+
+Why prompt compression?
+- Long prompts often confused LLMs  and yield lower effectiveness
+- Latency of decoder-based LLMs is quadratic with respect to prompt length
+
+Two main categories of approaches
+- Lexical based: Compress prompts by removing tokens according to their information entropy obtained from LLM
+- Embedding based: Compress prompt into special tokens (short compact memory slots) that can be directly conditioned on by the LLM.
+
+== Model Knowledge and Retrieval Knowledge
+
+
+The output of RAG is not guaranteed to be consistent with retrieved relevant passages
+
+Because the models are not explicitly trained to leverage and follow facts from provided passages.
+
+=== Inconsistent with RAG Evidence
+
+Injecting Knowledge
+
+
+#image("images/injecting knowledge 1.png",  width: 70%)
+
+
+#image("images/injecting knowledge evidence.png", width: 70%)
+
+== Power of Noise
+
+Introducing semantically aligned yet non-relevant documents potentially misguides LLMs. 
+
+=== Distracting Passage
+Progressive accuracy degrades as the number of distracting documents included in the context. Adding just one causes a sharp reduction
+
+=== Random Passage
+
+A random passage _can_ cause an improvement in effectiveness but it is LLM dependant.
+
+== Attribution
+
+Attribution: the ability to generate evidence (in the form of references or citations) that supports claims the LLM makes in an answer
+
+LLMs fail to correctly attribute and is consistently incorrect and evidence does not have evidence to support it's possition.
+
+There are two ways to improve attribution:
+- Direct generation attribution, and
+- Retrieval-based attribution
+
+However, direction generation attribution is prone to hallucination.
+
+=== Retrofit Attribution using Research and Revision (RARR)
+
+Automatically finds attribution for LLM output
+
+Post-edits the output to fix unsupported content while preserving original output as much as possible.
+
+#image("images/rarr 1.png")
+
+== RAG Resources
+
+Many platforms/frameworks for RAG
+- Industrial-oriented, e.g. Llama-Index, LangChain
+	- Some provided only/also as a service, e.g. Nuclia AI
+- Research-orientated: Ragnarok, FlashRAG, BERGEN
+
+Datasets
+- Many datasets, not necessarily focusing on RAG
+- Few recent data specifically designed for RAG, e.g.
+	- TREC RAG 2024
+
+=== BERGEN
+End-to-end library for reproducible research standarising RAG experiments
+
+Focus on QA
+
+Implements different state-of-the-art retrievers, rerankers, and LLMs.
+
+Also large scale analysis of RAG components (state-of-the-art retrievers, LLMs $arrow$ 500+ experiments)
+
+Key findings:
++ need to go beyond commonly used surface-matching metrics (e.g. exact match, F1, Rouge-L, etc.)
++ Retrieval quality matters for RAG response generation
++ Need to improve current knowledge-intensive benchmarks to use them in RAG:
+	+ Datasets evaluating general knowledge might not be suitable for RAG, as LLMs have acquired most such knowledge from Web/Wikipedia
++ LLMs of any size can benefit from retrieval.
+
+=== TREC RAG 2024 & Ragnarok
+
+TREC RAG 2024: dataset for RAG evaluation. Three tasks: Retrieve (R), Augmented Generation (AG), Retrieval Augmented Generation (RAG)
+
+Ragnarok: open-source, reproducible, reusable framework implementing RAG pipeline, with 2 sequential modules: (1) R, (2) AG
+
+=== Feb4Rag
+
+Create pseudo search engine for RAG systems; Good-system $arrow$ pick the correct search engine with respect to user query and generate high-quality responses
+
+Sample evaluation on RAG responses.
+
+== LC-LLMs
+
+
+Long-context LLMs enable promptss to be… long: this allows to pass for text (not just instructions) into the prompts
+
+Examples include Gemini-1.5-Pro (1M tokens; internal version 10M tokens), GPT4o (128k tokens), GPT-3.5-Turbo (16k tokens)
+
+Long context prompting is expensive due to quadratic computation cost of transformers regarding to the input token numbers
+
+Methods have been proposed to reduce cost
+- Prompt compression
+- Model distillation
+- LLM cascading
+
+Most LLM APIs charge based on token count.
+
+=== Advantages
+
+Potentially allows for consolidating complex pipelines into a unified model, thus reducing issues like:
+- Cascading erros
+- Cumbersome optimisation
+Streamline end-to-end approach to model development
+
+=== As a Search Engine
+
+This is currently an active area of study for Google Deepmind.
+
+Corpus-in-Context (CiC, pronounced "seek") direct ingestion and processing of entire corpa within their context window.
+
+#image("images/cic.png")
+
+==== CiC Prompting
+
+#image("images/CiC prompt.png", width: 60%)
+
+In the instruction they used funny wording such as “read carefully and understand”
+
+They hand crafted the prompt to get the model to perform well
+
+#image("images/cic prompt docids.png", width: 60%)
+
+Should use the same formatting over all the documents
+
+==== Efficiency
+
+As it uses token as cost, sending a ton of documents as a prompt will be expensive!
+
+CiC prompting is compatible with prefix-caching
+
+The corpus only needs to be encoded once (i.e. indexing phase)
+
+#image("images/cic limitations.png", width: 40%)
+
+==== Is it any good?
+
+#image("images/cic prompts.png")
+
+That's not bad!
+
+=== Position Bias
+
+#image("position bias.png", width: 50%)
+
+performance drops as gold documents of the test queries are more towards the end of the corpus
+- ? reduced attention in later sections of the prompt
+placing gold documents of few-shot queries at the end improves recall
+
+co-locating gold documents of few-shot and test queries consistently boosts performance
+
+=== Few Shot
+
+#image("few shot.png", width: 40%)
+
+=== Extreme Model Based IR
+
+
+Compared to RAG: no multi-component framework to maintain/trainrun
+
+Compared to DSI: no training! (indexing)
+
+
+#image("lc llm extreme ir.png", width: 50%)
+
+
+== Vision Language Models
+
+#image("screenshot retrievers.png")
+
+Current: extract each element then encode
+
+Screenshot: take screen then encode that entire thing
+
+=== Vision Language Models
+
+#image("vision language models.png", width: 60%)
+
+= Hyperlink Information in Retrieval
+
+Documents often contain metadata that explicitly relate them to other links.
+- Many document collections contain explicit links (web hyperlinks, citations in papers/legal cases).
+- Links can convey authority (a vote) and provide additional topical signal via anchor text.
+- Uses in IR: scoring/ranking, link-based clustering, features for classification, crawl prioritisation.
+
+== Anchor text
+Anchor text on links pointing to page $D$ can be indexed with $D$ (weighted by the authority of the source page). Useful signal: e.g., many anchors saying “ibm” pointing to `www.ibm.com` strongly indicate the target is about IBM.
+- Risks: spam, manipulation — weight anchors by source authority when possible.
+
+== PageRank (intuition)
+Model: web as directed graph (nodes = pages, edges = hyperlinks).
+
+Random-surfer process:
+  - Start at a random page.
+  - At each step: with probability $d$ follow a uniformly-chosen outlink; with probability $1-d$ teleport to a random page.
+  - In steady state, each page has a long-run visit probability = PageRank.
+
+=== Transition / equation (compact)
+Let $"PR"(u)$ be PageRank of $u$, $B_u$ the set of pages linking to $u$, $L_v$ the out-degree of $v$, $N$ the total pages, and $lambda$ the teleport prob.
+
+$"PR"(u) = (1-lambda)/N + lambda * sum_(v ∈ B_u) "PR"(v) / L_v$
+
+- Typical damping value: $lambda approx 0.85$ (so teleport prob $(1-lambda) approx 0.15$).
+- Intuitions for high PR:
+  - Many in-links.
+  - In-links from high-PR pages.
+  - In-links from pages with few out-links (less dilution).
+
+=== Practical considerations
+Handle sinks (dead-ends) via teleportation.
+Variants: site-internal links weighting, seeding new pages’ PR, combating link farms.
+
+PageRank is topic-independent — high PR doesn't guarantee topical relevance for a query.
+
+== Integrating PageRank into retrieval
+Treat PageRank as a query-independent feature (document prior).
+
+=== In Language Models
+Replace uniform prior $P(D)$ with priors proportional to PageRank, spam score, URL depth, etc.
+
+=== In Vector Space / Learning-to-rank
+Combine signals outside the pure vector space: \
+  $"score" = w_"vsm" * "sim"(q,d) + w_"pr" * "PageRank"(d) + w_"spam" * "SpamScore"(d) + ...$
+
+=== In BM25
+Model document as text $T$ + features $F$; weight and combine feature functions $F_(i(d))$ with tunable weights.
+
+Document priors can improve ranking but don't always guarantee better effectiveness; effects vary by model and query length.
+
+== Search-result diversification
+=== Motivation
+Queries can be ambiguous (multiple intents) and results can be redundant (many docs cover same intent). The goal is to return a ranking that maximises coverage of possible intents while minimising redundancy.
+
+=== Probability Ranking Principle (PRP)
+PRP: rank docs by decreasing probability of relevance (to maximise expected effectiveness).
+
+PRP assumes: (A1) relevance probabilities are estimated accurately (no uncertainty), (A2) relevance of a document is independent of other returned documents.
+
+Both assumptions are often violated in practice (ambiguity and interdependence).
+
+=== Diversification formulation
+Treat query as a mixture of possible information needs (aspects). Seek coverage across aspects and novelty among selected documents.
+
+=== Maximal Marginal Relevance (MMR)
+Balances relevance and novelty. For candidate `d`:
+
+$"score"(d) = alpha * P("relevant" | d) - (1-alpha) * max_(d prime in "ranked") "sim"(d,d prime)$
+
+- $alpha$ controls trade-off: higher $arrow$ more relevance; lower $arrow$ more diversity.
+
+== Evaluation & other topics
+Diversity-aware measures: intent-aware nDCG, a-nDCG, subtopic recall, MRR variants, ERR variants.
+
+
+Resources and testbeds: TREC, NTCIR collections for diversification tasks.
+
+Additional tasks: query ambiguity detection, query aspect mining, diversification across verticals.
+
+= Relevance Feedback (RF)
+Provide to the search engine information about the relevance of a document
+ - e.g. a user may tick one of the results on a SERP and say “this is relevant”
+- Explicit RF: the user explicitly tell the system one or more documents are relevant (both positive&negative)
+  - “More like this”, query-by-example
+- Implicit RF: use some of the signals from users to attempt to infer a relevance signal (both positive&negative)
+  - Clicks (though more often used in click-models/LTR)
+- Pseudo RF: just assume the top retrieved results are relevant, and recompute ranks (just positive) (rarely people also consider negative
+
+== VSM Extension for RF: Rocchio
+Attempts to construct the Optimal Query
+- Maximises the difference between the average vector representing the relevant documents and the average vector representing the non-relevant documents
+- Modifies query according to
+$
+q^prime_j = alpha dot q_j + beta dot 1/(|"Rel"|) sum_(D_i in "Rel") D_("ij") - gamma dot 1/(|"Nonrel"|) sum_(D_i in "Nonerel" d_("ij"))
+$
+
+== Query expansion
+Two main approaches:
++ Thesaurus / knowledge base
+  - Adding synonyms or more specific terms using query operators base don thesarusus
+  - Contradicting evidence on whether it improves search effectiveness
++ analysis of term co-occurrence / statistics
+
+#image("Screenshot from 2025-11-13 17-53-54.png")
+#image("Screenshot from 2025-11-13 17-53-59.png")
+
+Associated words are of little use for expanding the query "tropical fish " if considering "tropical" and "fish" on their own. Expansion based on whole query takes context into account (n-grams) though it is impractical for all possible queries.
+
+To actually deal with query expansion in your models you can either
++ Run the expansion terms through the same retrieval model you would use without expansion
+  - possibly weighting them differently to original terms
++ Formally define a retrieval model that represents the expansion process
+  - Use the model to determine: which terms are selected for expansion and their weight.
+
+== Query reduction
+Removes from a verbose query those terms that may be out of focus and hurt the retrieval process, you can use POS tagging, IDF-r or query performance predictors to determine terms that may not benefit the process, and remove them from the query.
+
+== Rank Fusion
+Combines many methods into one to boost performance.
+
+Methods:
+- Voting: based on the number of lists that support the retrieval of a document
+- Rank aggregation: rank of each doucment within each list is considered
+- Score aggragation: rank and score of each document within each list considered
+
+
+
+#pagebreak()
+
+= Index Compression
+
+== Indexes and Memory
+Goal: fast access to the index for quick query processing. Faster access $arrow$ index stored closer to CPU. Memory high in the hierarchy (cache, main memory) is limited and expensive. A full index with positions and extents can be as large as the original collection. Compression techniques help manage the memory hierarchy efficiently.
+
+=== Advantages of Index Compression
+Reduces disk and memory requirements.
+Allows index data to move up the memory hierarchy (closer to CPU). If compression achieves a factor of 4, we can store $4 times$ more data in CPU cache. Compression avoids fragmentation and paging issues.
+
+This Enables sharing of memory bandwidth across multiple CPUs however, requires decompression thus, it must be fast and efficient.
+
+== Modelling Compression
+CPU can process $p$ postings per second.
+Memory can supply CPU with $m$ postings per second.
+Effective processing rate: $min(m, p)$.
+
+Cases:
+- If $p > m$: CPU is idle (waiting for memory).
+- If $m > p$: memory is idle (waiting for CPU).
+
+With compression rate $r$ (r postings stored in place of one):
+- Memory supplies $m times r$ postings per second.
+- CPU processes $d times p$ postings per second, where $d$ is the decompression factor.
+
+Effective processing = $min("mr", "dp")$.
+
+== Goal of a Compression Algorithm
+We want to maximise $min("mr", "dp")$.
+
+- No compression: $r = 1$, $d = 1$.
+- With compression: $r > 1$, $d < 1$.
+- Compression only helps when CPU is faster than memory ($p > m$).
+- Ideally, choose compression such that $"mr" = "dp"$.
+
+Only lossless compression methods are used in IR (we can’t lose data in posting lists).
+
+== Basic Idea of Compression
+Common data elements use short codes whereas, uncommon data elements use longer codes.
+
+Example: encoding numbers
+- If we encode 0 as just “0”, total bits are reduced (e.g., 10 bits instead of 14), but decoding becomes ambiguous.
+- An encoding scheme must be unambiguous.
+
+== Delta Encoding
+Assumption: small numbers occur more often than large ones.
+- True for word frequencies: many words appear once or twice.
+- False for document IDs (some small, some large).
+
+Solution: store differences between consecutive document IDs $arrow$ *delta encoding*.
+
+Example:
+```
+DocIDs: 1, 5, 9, 18, 23
+Diffs:  1, 4, 4, 9, 5
+```
+These are called d-gaps.
+
+Produces smaller numbers (good for compression).
+
+=== Frequent vs Rare Words
+- Frequent words $arrow$ long posting lists, small increments (small d-gaps).
+- Rare words $arrow$ short lists, large increments (large d-gaps).
+- Frequent words compress better.
+
+== Unary Coding
+Encode integer $k$ as $k$ ones followed by a zero.
+
+Example: $k = 3 arrow 1110$
+
+- Works in base 1.
+- The trailing 0 makes it unambiguous.
+- Bit-aligned $arrow$ code boundaries can appear after any bit.
+
+Unary vs Binary:
+- Unary good for small numbers.
+- Binary better for large numbers.
+- Example: encoding 1023 $arrow$ unary requires 1024 bits, binary needs only 10.
+
+
+== Elias-Gamma Codes
+Combines unary and binary coding.
+
+Steps to encode $k$:
+1. Compute $floor(log_2(k))$  $arrow$ number of bits required for binary encoding.
+2. Encode this length in unary.
+3. Encode `k` in binary using that many bits.
+
+- Unary part indicates how many bits to read for the binary part.
+- Total bits: $2 floor(log_2(k)) + 1$
+
+Efficient for small numbers, inefficient for large ones (binary alone would use $floor(log_2(k))$ bits).
+
+== Elias-Delta Codes
+Steps to encode $k$:
+1. Encode the length of $k$’s binary representation ($log_2(k)$) in Elias-gamma.
+2. Encode `k` in binary.
+
+- Slightly worse for small numbers but better for large ones.
+- Bit cost $approx 2log_2(log_2k) + log_2k$.
+
+== Auxiliary Structures
+The inverted index is the primary data structure of a search engine.
+
+But there are also auxiliary structures:
+- Vocabulary/Lexicon: lookup table from term $arrow$ byte offset of inverted list in the index file.
+- Collection statistics: stored separately (term frequencies, document counts, etc.).
+
+Vocabulary typically fits in memory.
+
+== Data Structures
+To decide which structures to use, consider time complexity and space complexity.
+
+== In-Memory Index Construction
+A simple algorithm:
+1. Parse documents and store postings in memory.
+2. When memory fills up, write current index to disk as a partial index.
+3. Start a new in-memory index.
+
+Result: many partial indexes on disk $arrow$ must merge.
+
+=== Merging Process
+- Merge partial indexes ($I_1, I_2, …, I_n$) into a single sorted index.
+- Must merge in small chunks (can’t load all into memory).
+- Each list stored in alphabetical order $arrow$ merge efficiently.
+
+Distributed systems: use message-passing or MapReduce for large-scale merging.
+
+== Using Indexes for Retrieval
+Two main strategies for scoring:
+
+=== Document-at-a-Time (DAAT)
+- Process all query terms for one document before moving to the next.
+- Scores computed per document.
+- Advantage: low memory usage; good for top-k retrieval.
+
+=== Term-at-a-Time (TAAT)
+- Process all documents for one term before moving to the next.
+- Scores accumulated across documents.
+- Advantage: efficient disk access (sequential list reading).
+
+Both methods have optimisations for faster retrieval.
+
