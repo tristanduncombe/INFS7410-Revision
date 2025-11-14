@@ -11,7 +11,7 @@
 }
 Foreword:
 
-These are notes written by a web-developer who has no idea on web-indexing, read at your own risk. If you have thoughts comment on this document via Typst.app or via the GitHub discussion. Input is welcome! 
+These are notes written by a web-developer who has no idea on web-indexing, read at your own risk. If you have thoughts comment on this document via Typst.app. Input is welcome! 
 
 #pagebreak()
 
@@ -1752,8 +1752,8 @@ Combines many methods into one to boost performance.
 
 Methods:
 - Voting: based on the number of lists that support the retrieval of a document
-- Rank aggregation: rank of each doucment within each list is considered
-- Score aggragation: rank and score of each document within each list considered
+- Rank aggregation: rank of each document within each list is considered (Borda, RRF)
+- Score aggregation: rank and score of each document within each list considered (min-max, sum norm)
 
 
 
