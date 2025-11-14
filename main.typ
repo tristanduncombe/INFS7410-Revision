@@ -1,25 +1,34 @@
-
+#import "@preview/hydra:0.6.2": hydra
 #set text(font: "Noto Sans")
 #set text(lang: "en", region: "au")
 #[
   #set text(size: 50pt)
   INFS7410 Revision
 ]
-
+#set text(9pt)
 #show image: it => {
   align(center, it)
 }
+
+// )
 Foreword:
 
-These are notes written by a web-developer who has no idea on web-indexing, read at your own risk. If you have thoughts comment on this document via Typst.app. Input is welcome! 
+These are notes written by a web-developer who has no idea on web-indexing, read at your own risk. If you have thoughts comment on this document. Input is welcome! 
 
 #pagebreak()
-
+#set page(numbering: "1")
+#set page(
+  number-align: center,
+)
 #outline()
-
+#set page(
+  header: [#context(emph(hydra(1))) #h(1fr) INFS7410],
+  number-align: center,
+)
 #pagebreak()
 #set heading(numbering: "1.")
 = The Basics
+
 #set quote(block: true)
 #show quote: set pad(x: 5em)
 #quote(attribution: [Gerald Salton, IR pioneer])["Information Retrieval is the field concerned with the structure, analysis, organisation, storage, searching and retrieval of information"]
@@ -152,7 +161,7 @@ There are many problems with term-based lexical retrievers, for examples they re
 
 In 2017 Google published a paper called "Attention is all you need" which outlined the transformer architecture which could understand semantic within language. This architecture originally was purposed for language translation where they considered the semantics by considering the distribution of words in language. Consider the sentence "the cat sat on the mat". @transformer-matrix shows the attention matrix of this sentence, which shows that "the" and "cat" are highly related, and "cat" and "sat" are highly related amongst others. By understanding attention, we can understand what words relate to one another. This multi-head attention is a core part of the transformer architecture.
 
-#figure(image("images/transformer matrix.png"), caption: "Transformer Matrix showing Attention between Words in Sentance (Week 4 Lecture)")<transformer-matrix>
+#figure(image("images/transformer matrix.png",  width: 70%), caption: "Transformer Matrix showing Attention between Words in Sentance (Week 4 Lecture)")<transformer-matrix>
 
 To use a transformer:
 - first the text is tokenised (see @tokenisation) into token embeddings
@@ -162,7 +171,7 @@ To use a transformer:
   - it predicts which token is most likely to be the next word
   - it picks the highest probability token, which becomes the word generated
 
-#figure(image("images/probability.png"), caption: "Transformer Achitecture (Week 4 Lecture)")<transformer-use>
+#figure(image("images/probability.png",  width: 70%), caption: "Transformer Achitecture (Week 4 Lecture)")<transformer-use>
 
 
 The basic steps of transformer are:
@@ -362,7 +371,6 @@ $B$ is used to normalise the term frequency $f_i$.
 // TODO format equations like this everywherein the doc
 #figure([
   #v(10pt)
-  #set text(12pt)
   $((k_2+1)q f_i)/(k_2 + q f_i)$ 
   #v(10pt)
 ], kind: "Equation", supplement: "Equation", caption: [Within Query Component])
@@ -375,7 +383,7 @@ It introduces similar saturation behaviour as the within-document component and 
 
 Experiments suggest that this term is not particularly important — meaning multiple occurrences of a term in a query can often be treated as separate terms.
 
-= Embedding -based retrieval models (Dense Retrievers)
+= Embedding-based retrieval models (Dense Retrievers)
 Based on transformer encoders:
 - Single Vector based: DPR, ANCE, RepBERT, Contriever
 - Multi Vector based: ColBERT
@@ -1108,7 +1116,7 @@ We can use it to know if documents is relevant to query or not
 
 LLM-based reranking techniques: pointwise, pairwise, listwise, setwise
 
-#image("images/transformer decoder only.png")
+#image("images/transformer decoder only.png", width: 70%)
 
 === Using BERT for ranking
 
@@ -1126,14 +1134,14 @@ Common practice:
 
 === monoBERT
 
-#image("images/monoBERT for ranking.png")
+#image("images/monoBERT for ranking.png", width: 70%)
 
 monoBERT is very effective, below are results on the TREC 2019 Deep Learning Track (passage retrieval).
 
 #table(columns: (1fr, 1fr, 1fr, 1fr))[][nDCG\@10][MAP][Recall\@1k][BM25][0.506][0.377][0.739][+monoBERT][*0.738*][*0.506*][0.739][BM25 + RM3][0.518][0.427][0.788][+monoBERT][*0.724*][*0.529*][0.788]
 
 ==== monoBERT limitations
-#image("bert.png")
+#image("images/bert.png", width: 70%)
 Need separate embedding for every possible position, so we restrict the indices 0-511.
 - Hence, we cannot input the entire document.
 
@@ -1153,11 +1161,11 @@ Need separate embedding for every possible position, so we restrict the indices 
 === monoBERT over passages scores
 BERT-MaxP, FirstP, SumP either take the maximum, first or sum. 
 
-#image("bert-max-p.png")
+#image("images/bert-max-p.png", width: 70%)
 
 These methods deliver better results with MaxP showing the best results
 // MAYBE remove????
-#image("monobert-passages-scores-results.png")
+#image("images/monobert-passages-scores-results.png", width: 70%)
 
 === monoBERT over sentence scores: Birch
 
@@ -1166,13 +1174,13 @@ $s_f =^Delta alpha dot s_d + (1 - alpha) dot sum^n_(i=1) w_i dot s_i$
 Where: \
 $alpha dot s_d$ is the first retrieval score \
 $w_i dot s_i$ is the sentence scores
-
+#import "@preview/hydra:0.6.2": hydra
 Trained on sentence level judgements like tweets and interpolation weights are tuned on target dataset.
 // Maybe add scores here??????
 
 === Representation Aggregate
 
-#image("representation aggregation.png")
+#image("images/representation aggregation.png", width: 70%)
 
 You can do this for either term embeddings or passage representations.
 
@@ -1188,7 +1196,7 @@ Aggregation approaches (in order of increasing complexity):
 
 - Two Transformer layers
 
-#image("parade.png")
+#image("images/parade.png", width: 70%)
 
 
 === Multi-stage re-rankers
@@ -1196,7 +1204,7 @@ Aggregation approaches (in order of increasing complexity):
 A multi-stage re-ranker will take the top k documents and then put it through another re-ranker. Usually this is from most efficient to least efficient with the the least efficient being the most effective. There is trade-off between effectiveness (quality of the ranked lists) and efficiency (retrieval latency). 
 
 === duoBERT
-#image("duoBERT.png")
+#image("images/duoBERT.png", width: 70%)
 
 DuoBERT takes the token embeddings, segment embeddings, and position embeddings.
 
@@ -1206,15 +1214,15 @@ $L_"duo" = - sum_(i in J_"pos", j in J_"neg") log(p_i, j) - sum_(i in in J_"neg"
 
 Is doc di more relevant than doc dj to query q?
 
-#image("duobert training.png")
+#image("images/duobert training.png", width: 70%)
 
 === Inference with duoBERT
 
-#image("duobert inference.png")
+#image("images/duobert inference.png", width: 70%)
 
 === monoBERT vs duoBERT
 
-#image("monobert v duobert.png")
+#image("images/monobert v duobert.png", width: 70%)
 
 
 === Takeaways of Multi-stage Rankers
@@ -1230,13 +1238,13 @@ Reranking with transformers is new and not well studied
 
 === LLM as a Rankers
 
-#image("llm-as-rankers.png")
+#image("images/llm-as-rankers.png", width: 70%)
 
 All four main families are characterised by how documents are passed in the prompt an dhow relevance of document and query is determined.
 
 All are "zero-shot": i.e. once you obtained the pre-trained, instructions tuned LLM, no need to do contrastive training
 
-#image("llm-as-rankers-methods.png")
+#image("images/llm-as-rankers-methods.png")
 
 Where: \
 a is pointwise, \
@@ -1248,7 +1256,7 @@ Setwise offers two advanages:
 - Compared to listwise: it can rely on logits rather than generation so it's faster
 - Compared to pairwise: it requires less comparisons (i.e. inferences with LLM)
 
-#image("pairwise v setwise.png")
+#image("images/pairwise v setwise.png")
 
 Prompts proposed for different LLM rankers vary largely. Not just in terms of instructions but adding additional wording such as a roleplaying and ordering of components (passage first, then query - or vice versa)
 
@@ -1259,18 +1267,18 @@ The effectiveness varies across these wordings, with LLMs finding ranking more c
 As was previously discussed there are three transformer architectures:
 
 #grid(columns: (0.5fr, 1fr))[][][
-  #image("encoder.png", width: 75%)
+  #image("images/encoder.png", width: 75%)
 ][
   - Gets bidirectional context: can condition on future tokens!
   - Fine-tuning done via Masked Language Model
   - BERT uses this approach
   - Generating sequences: don't naturally lead to effective auto regressive (1-word-at-a-time) generation methods. \ \
 ][
-#image("decoder.png", width: 75%)
+#image("images/decoder.png", width: 75%)
 ][- Can generate text, but can't condition on future words
 - GPT-stye][
   
-#image("encoder-decoder.png")
+#image("images/encoder-decoder.png")
 ][
   - Good parts of decoders and encoders? Not really.
   - Hard to scale (computationally complex)
@@ -1282,7 +1290,7 @@ As was previously discussed there are three transformer architectures:
 
 In an autoregressive text generation model, at each time step $t$, the model takes a sequence of ${y}_(<t)$ as input, and outputs a new token $hat(y)_t$
 #align(center)[
-  #image("autoregressive-decoder.png", width: 50%)
+  #image("images/autoregressive-decoder.png", width: 50%)
 ]
 
 == In-context Learning
@@ -1301,7 +1309,7 @@ Output (conditional generations):
 "loutre..."
 
 
-#image("in-context-learning.png")
+#image("images/in-context-learning.png", width: 70%)
 
 == Zero, one, few-shot learning
 
@@ -1374,7 +1382,7 @@ Unsupervised fine-tuning offers some improvement, but RAG consistently outperfor
 
 
 #align(center)[
- #image("rag-pipline.png", width: 50%) 
+ #image("images/rag-pipline.png", width: 50%) 
 ]
 
 The pre-retrieval and post-retrieval are not necessary.
@@ -1393,14 +1401,14 @@ BlendFilter enhances input queries through different augmentation strategies.
 + Concatenate answer and original query
 
 Then it prompts for internal knowledge
-#image("internal-knowledge-augmentation.png", width: 30%)
+#image("images/internal-knowledge-augmentation.png", width: 30%)
 
 Then it eliminates the irrelevant knowledge using prompted LLM. It would provide the LLM the knowledge retrieved, the topic at hand and would ask it to categorise into a certain level of knowledge ("please check the relevance between the question and knowledges 0-4 on by one based on the context"). 
 
 The LLM generates an answer based on the filtered knowledge and original query.
 
 
-#image("blendfilter.png", width: 50%)
+#image("images/blendfilter.png", width: 50%)
 
 == Rewrite-Retrieve-Read Method
 
@@ -1594,7 +1602,7 @@ That's not bad!
 
 === Position Bias
 
-#image("position bias.png", width: 50%)
+#image("images/position bias.png", width: 50%)
 
 performance drops as gold documents of the test queries are more towards the end of the corpus
 - ? reduced attention in later sections of the prompt
@@ -1604,7 +1612,7 @@ co-locating gold documents of few-shot and test queries consistently boosts perf
 
 === Few Shot
 
-#image("few shot.png", width: 40%)
+#image("images/few shot.png", width: 40%)
 
 === Extreme Model Based IR
 
@@ -1614,12 +1622,12 @@ Compared to RAG: no multi-component framework to maintain/trainrun
 Compared to DSI: no training! (indexing)
 
 
-#image("lc llm extreme ir.png", width: 50%)
+#image("images/lc llm extreme ir.png", width: 50%)
 
 
 == Vision Language Models
 
-#image("screenshot retrievers.png")
+#image("images/screenshot retrievers.png")
 
 Current: extract each element then encode
 
@@ -1627,7 +1635,7 @@ Screenshot: take screen then encode that entire thing
 
 === Vision Language Models
 
-#image("vision language models.png", width: 60%)
+#image("images/vision language models.png", width: 60%)
 
 = Hyperlink Information in Retrieval
 
@@ -1681,8 +1689,8 @@ Model document as text $T$ + features $F$; weight and combine feature functions 
 Document priors can improve ranking but don't always guarantee better effectiveness; effects vary by model and query length.
 
 == Search-result diversification
-=== Motivation
-Queries can be ambiguous (multiple intents) and results can be redundant (many docs cover same intent). The goal is to return a ranking that maximises coverage of possible intents while minimising redundancy.
+=== Motivation)
+Queries can be ambiguous (multiple)at maximises coverage of possible intents while minimising redundancy.
 
 === Probability Ranking Principle (PRP)
 PRP: rank docs by decreasing probability of relevance (to maximise expected effectiveness).
@@ -1733,8 +1741,8 @@ Two main approaches:
   - Contradicting evidence on whether it improves search effectiveness
 + analysis of term co-occurrence / statistics
 
-#image("Screenshot from 2025-11-13 17-53-54.png")
-#image("Screenshot from 2025-11-13 17-53-59.png")
+#image("images/Screenshot from 2025-11-13 17-53-54.png")
+#image("images/Screenshot from 2025-11-13 17-53-59.png")
 
 Associated words are of little use for expanding the query "tropical fish " if considering "tropical" and "fish" on their own. Expansion based on whole query takes context into account (n-grams) though it is impractical for all possible queries.
 
